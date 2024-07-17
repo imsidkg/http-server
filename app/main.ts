@@ -12,7 +12,7 @@ const server = net.createServer((socket) => {
 
    for(let line of lines){
     if(line.startsWith('User-Agent:')){
-        userAgent = line.split(':')[1].trim(); 
+        userAgent = line.split(':')[1].trim(); // Trim to remove any leading/trailing whitespace
         break;
     }
    }
@@ -21,7 +21,7 @@ const server = net.createServer((socket) => {
     if (url === '/') {
         socket.write('HTTP/1.1 200 OK\r\n\r\n');
     } else if (url === '/user-agent') {
-        const contentLength = userAgent.length.toString(); 
+        const contentLength = userAgent.length.toString(); // Convert length to string
         socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${contentLength}\r\n\r\n${userAgent}`);
     } 
     else if (url === `/echo/${str}`) {
