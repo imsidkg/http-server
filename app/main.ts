@@ -41,6 +41,18 @@ const server = net.createServer((socket) => {
         else{
             console.log('file does not exist')
         }
+
+        let stats = fs.statSync(
+            filePath);
+             
+            // Use isFile() method to log the result to screen
+            console.log('is file ? ' + stats.isFile());
+             
+            stats = fs.statSync(
+                filePath);
+             
+            // Use isDirectory() method to log the result to screen
+            console.log('is directory ? ' + stats.isDirectory());
         fs.readFile(filePath , (err , data) => {
             if(err) {
                 console.log(err)
