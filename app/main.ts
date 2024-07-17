@@ -31,35 +31,37 @@ const server = net.createServer((socket) => {
     }
     else if(url.startsWith('/files')){  
         const fileName = url.split('/')[2];
-        console.log(fileName)
-        let filePath = path.join('/files', fileName);
+        const args = process.argv.slice(2);
+        const absPath = args[1]; // Assuming the absolute path is the second argument
+        let filePath = path.join(absPath, fileName);
+        console.log('Requested file:', fileName);
         console.log('Original file path:', filePath);
-        
-        // Trim the /app prefix
-        // const prefix = '/app';
-        // if (filePath.startsWith(prefix)) {
-        //    filePath = filePath.replace(prefix, '');
-        // }
-        // console.log('Trimmed file path:', filePath);
-        fs.access(filePath, fs.constants.F_OK, (err) => {
-            if (err) {
-               console.error('File does not exist:', filePath);
-               socket.write('HTTP/1.1 404 Not Found\r\n\r\n');
-            } else {
-               fs.readFile(filePath, (err, data) => {
-                  if (err) {
-                     console.log(err);
-                     socket.write('HTTP/1.1 404 Not Found\r\n\r\n');
-                  } else {
-                     socket.write(`HTTP/1.1 200 OK\r\nContent-Length: ${data.length}\r\n\r\n`);
-                     socket.write(data);
-                  }
-                  socket.end(); // Ensure the connection is properly closed
-               });
-            }
-         });
 
-    }
+        // Trim the /app prefix
+        const prefix = '/app';
+        if (filePath.startsWith(prefix)) {
+           filePath = filePath.replace(prefix, '');
+        }
+        console.log('Trimmed file path:', filePath);
+
+        fs.access(filePath, fs.constants.F_OK, (err) => {
+           if (err) {
+              console.error('File does not exist:', filePath);
+              socket.write('HTTP/1.1 404 Not Found\r\n\r\n');
+           } else {
+              fs.readFile(filePath, (err, data) => {
+                 if (err) {
+                    console.log(err);
+                    socket.write('HTTP/1.1 404 Not Found\r\n\r\n');
+                 } else {
+                    socket.write(`HTTP/1.1 200 OK\r\nContent-Length: ${data.length}\r\n\r\n`);
+                    socket.write(data);
+                 }
+                 socket.end(); // Ensure the connection is properly closed
+              });
+           }
+        });
+     }
     else {
         socket.write('HTTP/1.1 404 Not Found\r\n\r\n');
     }
