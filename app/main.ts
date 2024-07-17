@@ -6,7 +6,7 @@ const server = net.createServer((socket) => {
     const url =  req.split(' ')[1];
     const res =  url === '/' ? 'HTTP/1.1 200 OK\r\n\r\n' : 'HTTP/1.1 404 Not Found\r\n\r\n';
     const str = url.split('/')[2];
-    const userAgent = url.split('/r/n')[2].split(':');
+    const userAgent = url.split('/r/n')[2].split(':')[1];
     console.log(userAgent)
 
    
