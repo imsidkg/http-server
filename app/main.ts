@@ -8,11 +8,11 @@ const server = net.createServer((socket) => {
     const str = url.split('/')[2];
     const lines = req.split('\r\n'); // Corrected to split the entire request by \r\n
 
-   let userAgent = ''
+   let userAgent = '';
 
    for(let line of lines){
     if(line.startsWith('User-Agent:')){
-        userAgent = line.split(':')[1];
+        userAgent = line.split(':')[1].trim(); // Trim to remove any leading/trailing whitespace
         break;
     }
    }
@@ -21,12 +21,11 @@ const server = net.createServer((socket) => {
     if (url === '/') {
         socket.write('HTTP/1.1 200 OK\r\n\r\n');
     } else if (url === '/user-agent') {
-        socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${userAgent.length}\r\n\r\n${userAgent}`);
+        const contentLength = userAgent.length.toString(); // Convert length to string
+        socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${contentLength}\r\n\r\n${userAgent}`);
     } 
     else if (url === `/echo/${str}`) {
-      
         socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${str.length}\r\n\r\n${str}`)
-
     }
     else {
         socket.write('HTTP/1.1 404 Not Found\r\n\r\n');
