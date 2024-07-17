@@ -21,7 +21,7 @@ const server = net.createServer((socket) => {
     if (url === '/') {
         socket.write('HTTP/1.1 200 OK\r\n\r\n');
     } else if (url === '/user-agent') {
-        socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${userAgent.length}\n\n${userAgent}`);
+        socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${userAgent.length}\r\n${userAgent}`);
     } 
     else if (url === `/echo/${str}`) {
       
