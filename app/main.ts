@@ -6,17 +6,23 @@ import * as fs from 'fs';
 const server = net.createServer((socket) => {
    let body = '';
    let contentLength = 0;
+   let method = '';
+   let url = '';
+   let contentType = '';
 
    socket.on('data', (data) => {
     const req = data.toString();
     const lines = req.split('\r\n');
-    const [method, url] = lines[0].split(' ');
-    console.log('method is ' ,method)
-    console.log('url is ' ,url)
+    
+    if (!method || !url) {
+      [method, url] = lines[0].split(' ');
+      console.log('method is', method);
+      console.log('url is', url);
+    }
+
     const str = url.split('/')[2];
 
     let userAgent = '';
-    let contentType = '';
 
     for(let line of lines){
       if(line.startsWith('User-Agent:')){
@@ -28,47 +34,56 @@ const server = net.createServer((socket) => {
       }
     }
 
-    // Handle POST request
-    if (method === 'POST' && url.startsWith('/files') ) {
-      body += req.split('\r\n\r\n')[1];
-      
-      if (body.length >= contentLength) {
-        handlePostRequest(socket, body, contentType);
-        body = '';
-        contentLength = 0;
-      }
-      return;
-    }
+    body += req.split('\r\n\r\n')[1] || '';
 
-    // Existing GET routes
-    if (method === 'GET') {
-      if (url === '/') {
-        socket.write('HTTP/1.1 200 OK\r\n\r\n');
-      } else if (url === '/user-agent') {
-        const contentLength = userAgent.length.toString();
-        socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${contentLength}\r\n\r\n${userAgent}`);
-      } else if (url === `/echo/${str}`) {
-        socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${str.length}\r\n\r\n${str}`);
-      } else if(url.startsWith('/files')){  
-        handleFileRequest(socket, url);
+    if (body.length >= contentLength) {
+      // Handle POST request
+      if (method === 'POST' && url.startsWith('/files/')) {
+        handlePostRequest(socket, body, contentType, url);
+      } 
+      // Existing GET routes
+      else if (method === 'GET') {
+        if (url === '/') {
+          socket.write('HTTP/1.1 200 OK\r\n\r\n');
+        } else if (url === '/user-agent') {
+          const contentLength = userAgent.length.toString();
+          socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${contentLength}\r\n\r\n${userAgent}`);
+        } else if (url.startsWith('/echo/')) {
+          const echoContent = url.slice(6); // Remove '/echo/' prefix
+          socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${echoContent.length}\r\n\r\n${echoContent}`);
+        } else if(url.startsWith('/files/')){  
+          handleFileRequest(socket, url);
+        } else {
+          socket.write('HTTP/1.1 404 Not Found\r\n\r\n');
+        }
       } else {
-        socket.write('HTTP/1.1 404 Not Found\r\n\r\n');
+        socket.write('HTTP/1.1 405 Method Not Allowed\r\n\r\n');
       }
-    } else {
-      socket.write('HTTP/1.1 405 Method Not Allowed\r\n\r\n');
+
+      // Reset for next request
+      body = '';
+      contentLength = 0;
+      method = '';
+      url = '';
+      contentType = '';
     }
    });
 });
 
-function handlePostRequest(socket:Socket, body : string, contentType : string) {
+function handlePostRequest(socket: Socket, body: string, contentType: string, url: string) {
   const args = process.argv.slice(2);
   const absPath = args[1];
-  const fileName = body.split('\r\n')[1].split(';')[2].split('=')[1].replace(/"/g, '');
-  const fileContent = body.split('\r\n\r\n')[1].split('\r\n')[0];
-  
+  const fileName = url.split('/').pop(); // Extract filename from URL
+
+  if (!fileName) {
+    socket.write('HTTP/1.1 400 Bad Request\r\n\r\nInvalid file name');
+    socket.end();
+    return;
+  }
+
   let filePath = path.join(absPath, fileName);
-  
-  fs.writeFile(filePath, fileContent, (err) => {
+
+  fs.writeFile(filePath, body, (err) => {
     if (err) {
       console.error('Error writing file:', err);
       socket.write('HTTP/1.1 500 Internal Server Error\r\n\r\n');
@@ -79,16 +94,11 @@ function handlePostRequest(socket:Socket, body : string, contentType : string) {
   });
 }
 
-function handleFileRequest(socket:Socket, url:string) {
-  const fileName = url.split('/')[2];
+function handleFileRequest(socket: Socket, url: string) {
+  const fileName = url.split('/').pop();
   const args = process.argv.slice(2);
   const absPath = args[1];
   let filePath = path.join(absPath, fileName);
-
-  const prefix = '/app';
-  if (filePath.startsWith(prefix)) {
-     filePath = filePath.replace(prefix, '');
-  }
 
   fs.access(filePath, fs.constants.F_OK, (err) => {
      if (err) {
