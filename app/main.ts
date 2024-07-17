@@ -35,6 +35,12 @@ const server = net.createServer((socket) => {
         const filePath = path.join(__dirname , fileName)
         console.log('directory name is ' , __dirname)
         console.log(filePath)
+        if(fs.existsSync(filePath)){
+            console.log('file exists' )
+        }
+        else{
+            console.log('file does not exist')
+        }
         fs.readFile(filePath , (err , data) => {
             if(err) {
                 console.log(err)
