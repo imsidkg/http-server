@@ -29,7 +29,7 @@ const server = net.createServer((socket) => {
     }
 
     // Handle POST request
-    if (method === 'POST' && url === '/files') {
+    if (method === 'POST' && url.startsWith('/files') ) {
       body += req.split('\r\n\r\n')[1];
       
       if (body.length >= contentLength) {
