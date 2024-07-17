@@ -7,7 +7,6 @@ const server = net.createServer((socket) => {
     const res =  url === '/' ? 'HTTP/1.1 200 OK\r\n\r\n' : 'HTTP/1.1 404 Not Found\r\n\r\n';
     const str = url.split('/')[2];
     const lines = req.split('\r\n'); // Corrected to split the entire request by \r\n
-    console.log(lines)
 
    let userAgent = '';
 
