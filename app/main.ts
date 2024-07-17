@@ -98,7 +98,7 @@ function handleFileRequest(socket: Socket, url: string) {
   const fileName = url.split('/').pop();
   const args = process.argv.slice(2);
   const absPath = args[1];
-  let filePath = path.join(absPath, fileName);
+  let filePath = path.join(absPath, fileName!);
 
   fs.access(filePath, fs.constants.F_OK, (err) => {
      if (err) {
