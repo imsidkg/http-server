@@ -36,6 +36,7 @@ const server = net.createServer((socket) => {
         console.log(filePath)
         fs.readFile(filePath , (err , data) => {
             if(err) {
+                console.log(err)
                 socket.write('HTTP/1.1 404 Not Found\r\n\r\n');
             }
             else{
