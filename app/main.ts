@@ -32,15 +32,15 @@ const server = net.createServer((socket) => {
     else if(url.startsWith('/files')){  
         const fileName = url.split('/')[2];
         console.log(fileName)
-        let filePath = path.join(__dirname, fileName);
+        let filePath = path.join('/files', fileName);
         console.log('Original file path:', filePath);
         
         // Trim the /app prefix
-        const prefix = '/app';
-        if (filePath.startsWith(prefix)) {
-           filePath = filePath.replace(prefix, '');
-        }
-        console.log('Trimmed file path:', filePath);
+        // const prefix = '/app';
+        // if (filePath.startsWith(prefix)) {
+        //    filePath = filePath.replace(prefix, '');
+        // }
+        // console.log('Trimmed file path:', filePath);
         fs.access(filePath, fs.constants.F_OK, (err) => {
             if (err) {
                console.error('File does not exist:', filePath);
