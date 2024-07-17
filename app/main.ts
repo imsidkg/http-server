@@ -32,37 +32,32 @@ const server = net.createServer((socket) => {
     else if(url.startsWith('/files')){  
         const fileName = url.split('/')[2];
         console.log(fileName)
-        const filePath = path.join(__dirname , fileName)
-        console.log('directory name is ' , __dirname)
-        console.log(filePath)
-        if(fs.existsSync(filePath)){
-            console.log('file exists' )
+        let filePath = path.join(__dirname, fileName);
+        console.log('Original file path:', filePath);
+        
+        // Trim the /app prefix
+        const prefix = '/app';
+        if (filePath.startsWith(prefix)) {
+           filePath = filePath.replace(prefix, '');
         }
-        else{
-            console.log('file does not exist')
-        }
-
-        let stats = fs.statSync(
-            filePath);
-             
-            // Use isFile() method to log the result to screen
-            console.log('is file ? ' + stats.isFile());
-             
-            stats = fs.statSync(
-                filePath);
-             
-            // Use isDirectory() method to log the result to screen
-            console.log('is directory ? ' + stats.isDirectory());
-        fs.readFile(filePath , (err , data) => {
-            if(err) {
-                console.log(err)
-                socket.write('HTTP/1.1 404 Not Found\r\n\r\n');
+        console.log('Trimmed file path:', filePath);
+        fs.access(filePath, fs.constants.F_OK, (err) => {
+            if (err) {
+               console.error('File does not exist:', filePath);
+               socket.write('HTTP/1.1 404 Not Found\r\n\r\n');
+            } else {
+               fs.readFile(filePath, (err, data) => {
+                  if (err) {
+                     console.log(err);
+                     socket.write('HTTP/1.1 404 Not Found\r\n\r\n');
+                  } else {
+                     socket.write(`HTTP/1.1 200 OK\r\nContent-Length: ${data.length}\r\n\r\n`);
+                     socket.write(data);
+                  }
+                  socket.end(); // Ensure the connection is properly closed
+               });
             }
-            else{
-                socket.write(`HTTP/1.1 200 OK\r\nContent-Length: ${data.length}\r\n\r\n`)
-                socket.write(data)
-            }
-        })
+         });
 
     }
     else {
