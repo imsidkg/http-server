@@ -6,11 +6,12 @@ const server = net.createServer((socket) => {
     const url =  req.split(' ')[1];
     const res =  url === '/' ? 'HTTP/1.1 200 OK\r\n\r\n' : 'HTTP/1.1 404 Not Found\r\n\r\n';
     const str = url.split('/')[2];
-    if(url === `/echo/${str}`){
+    if (url === '/') {
+        socket.write('HTTP/1.1 200 OK\r\n\r\n');
+    } else if (url === `/echo/${str}`) {
         socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${str.length}\r\n\r\n${str}`)
-    }
-    else{
-        socket.write('HTTP/1.1 404 Not Found\r\n\r\n')
+    } else {
+        socket.write('HTTP/1.1 404 Not Found\r\n\r\n');
     }
 
    })
