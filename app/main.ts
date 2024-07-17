@@ -54,7 +54,7 @@ const server = net.createServer((socket) => {
                     console.log(err);
                     socket.write('HTTP/1.1 404 Not Found\r\n\r\n');
                  } else {
-                    socket.write(`HTTP/1.1 200 OK\r\nContent-Length: ${data.length}\r\n\r\n`);
+                    socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${data.length}\r\n\r\n`);
                     socket.write(data);
                  }
                  socket.end(); // Ensure the connection is properly closed
