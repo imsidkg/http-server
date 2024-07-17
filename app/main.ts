@@ -11,7 +11,8 @@ const server = net.createServer((socket) => {
     const req = data.toString();
     const lines = req.split('\r\n');
     const [method, url] = lines[0].split(' ');
-    console.log(method)
+    console.log('method is ' ,method)
+    console.log('url is ' ,url)
     const str = url.split('/')[2];
 
     let userAgent = '';
