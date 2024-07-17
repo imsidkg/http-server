@@ -7,12 +7,13 @@ const server = net.createServer((socket) => {
     const res =  url === '/' ? 'HTTP/1.1 200 OK\r\n\r\n' : 'HTTP/1.1 404 Not Found\r\n\r\n';
     const str = url.split('/')[2];
     const lines = req.split('\r\n'); // Corrected to split the entire request by \r\n
+    console.log(lines)
 
    let userAgent = '';
 
    for(let line of lines){
     if(line.startsWith('User-Agent:')){
-        userAgent = line.split(':')[1].trim(); // Trim to remove any leading/trailing whitespace
+        userAgent = line.split(':')[1].trim(); 
         break;
     }
    }
@@ -21,7 +22,7 @@ const server = net.createServer((socket) => {
     if (url === '/') {
         socket.write('HTTP/1.1 200 OK\r\n\r\n');
     } else if (url === '/user-agent') {
-        const contentLength = userAgent.length.toString(); // Convert length to string
+        const contentLength = userAgent.length.toString(); 
         socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${contentLength}\r\n\r\n${userAgent}`);
     } 
     else if (url === `/echo/${str}`) {
