@@ -33,6 +33,7 @@ const server = net.createServer((socket) => {
         const fileName = url.split('/')[2];
         console.log(fileName)
         const filePath = path.join(__dirname , fileName)
+        console.log('directory name is ' , __dirname)
         console.log(filePath)
         fs.readFile(filePath , (err , data) => {
             if(err) {
