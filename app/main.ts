@@ -283,6 +283,12 @@ const server = net.createServer((socket) => {
       return;
     }
 
+      for(let line of lines){
+              if (line.startsWith("Accept-Encoding:")) {
+                acceptEncoding = line.split(":")[1].trim();
+              }
+           }
+
     const gzipSupported = acceptEncoding.includes("gzip");
     console.log(gzipSupported);
     console.log('compressed length is', compressed.length);
