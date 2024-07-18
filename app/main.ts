@@ -54,6 +54,7 @@ const server = net.createServer((socket) => {
             `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${contentLength}\r\n\r\n${userAgent}`
           );
         } else if (url.startsWith("/echo/")) {
+          console.log('accpet encoding is', acceptEncoding)
           const echoContent = url.slice(6); // Remove '/echo/' prefix
           const input = Buffer.from(echoContent); // Use Buffer.from instead of Buffer
 
