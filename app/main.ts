@@ -1,16 +1,17 @@
-import * as net from 'net';
-import { Socket } from 'net';
-import path from 'path';
-import * as fs from 'fs';
+import * as net from "net";
+import { Socket } from "net";
+import path from "path";
+import * as fs from "fs";
 
 const server = net.createServer((socket) => {
-   let body = '';
-   let contentLength = 0;
-   let method = '';
-   let url = '';
-   let contentType = '';
+  let body = '';
+  let contentLength = 0;
+  let method = '';
+  let url = '';
+  let contentType = '';
+  let acceptEncoding = ''; // Declare acceptEncoding here
 
-   socket.on('data', (data) => {
+  socket.on('data', (data) => {
     const req = data.toString();
     const lines = req.split('\r\n');
     
@@ -31,6 +32,8 @@ const server = net.createServer((socket) => {
         contentLength = parseInt(line.split(':')[1].trim(), 10);
       } else if(line.startsWith('Content-Type:')){
         contentType = line.split(':')[1].trim();
+      } else if(line.startsWith('Accept-Encoding:')){
+        acceptEncoding = line.split(':')[1].trim();
       }
     }
 
@@ -52,7 +55,7 @@ const server = net.createServer((socket) => {
           const echoContent = url.slice(6); // Remove '/echo/' prefix
           socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${echoContent.length}\r\n\r\n${echoContent}`);
         } else if(url.startsWith('/files/')){  
-          handleFileRequest(socket, url);
+          handleFileRequest(socket, url, acceptEncoding); // Pass acceptEncoding here
         } else {
           socket.write('HTTP/1.1 404 Not Found\r\n\r\n');
         }
@@ -66,8 +69,9 @@ const server = net.createServer((socket) => {
       method = '';
       url = '';
       contentType = '';
+      acceptEncoding = ''; // Reset acceptEncoding here
     }
-   });
+  });
 });
 
 function handlePostRequest(socket: Socket, body: string, contentType: string, url: string) {
@@ -94,7 +98,7 @@ function handlePostRequest(socket: Socket, body: string, contentType: string, ur
   });
 }
 
-function handleFileRequest(socket: Socket, url: string) {
+function handleFileRequest(socket: Socket, url: string, acceptEncoding: string) {
   const fileName = url.split('/').pop();
   const args = process.argv.slice(2);
   const absPath = args[1];
@@ -111,7 +115,13 @@ function handleFileRequest(socket: Socket, url: string) {
               console.log(err);
               socket.write('HTTP/1.1 404 Not Found\r\n\r\n');
            } else {
-              socket.write(`HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: ${data.length}\r\n\r\n`);
+              const supportsGzip = acceptEncoding.includes('gzip');
+              if (supportsGzip) {
+                // For now, just set the header without actually compressing
+                socket.write(`HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: application/octet-stream\r\nContent-Length: ${data.length}\r\n\r\n`);
+              } else {
+                socket.write(`HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: ${data.length}\r\n\r\n`);
+              }
               socket.write(data);
            }
            socket.end();
