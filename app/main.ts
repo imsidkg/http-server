@@ -2,6 +2,7 @@ import * as net from "net";
 import { Socket } from "net";
 import path from "path";
 import * as fs from "fs";
+import { Buffer } from "buffer";
 import zlib from 'zlib';
 
 const server = net.createServer((socket) => {
@@ -57,7 +58,7 @@ const server = net.createServer((socket) => {
           );
         } else if (url.startsWith("/echo/")) {
           const echoContent = url.slice(6); // Remove '/echo/' prefix
-          const input = Buffer.from(echoContent, 'utf8'); // Use Buffer.from with encoding
+          const input = Buffer.from(echoContent); // Create a buffer for gzip compression
 
           zlib.gzip(input, (err: Error | null, compressed: Buffer) => {
             if (err) {
@@ -67,23 +68,16 @@ const server = net.createServer((socket) => {
             }
 
             const gzipSupported = acceptEncoding.includes("gzip");
-            console.log(gzipSupported);
+            const headers = `HTTP/1.1 200 OK\r\n${gzipSupported ? "Content-Encoding: gzip\r\n" : ""}Content-Type: text/plain\r\nContent-Length: ${compressed.length}\r\n\r\n`;
 
-            if (gzipSupported) {
-              const headers = `HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: text/plain\r\nContent-Length: ${compressed.length}\r\n\r\n`;
-
-              socket.write(headers); // Write headers first
-              socket.write(compressed); // Then write compressed body
-            } else {
-              const headers = `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${input.length}\r\n\r\n`;
-
-              socket.write(headers); // Write headers first
-              socket.write(input); // Then write uncompressed body
-            }
+            socket.write(headers); // Write headers
+            socket.write(gzipSupported ? compressed : input); // Write compressed or uncompressed body
             socket.end();
           });
         } else if (url.startsWith("/files/")) {
-          handleFileRequest(socket, url, acceptEncoding);
+          console.log("reached here 1");
+          handleFileRequest(socket, url, acceptEncoding); // Pass acceptEncoding here
+          console.log("reached here 2");
         } else {
           socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
         }
@@ -162,18 +156,19 @@ function handleFileRequest(
                 return;
               }
 
-              const headers = `HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: application/octet-stream\r\nContent-Length: ${compressed.length}\r\n\r\n`;
-
-              socket.write(headers); // Write headers first
-              socket.write(compressed); // Then write compressed body
+              socket.write(
+                `HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: application/octet-stream\r\nContent-Length: ${compressed.length}\r\n\r\n`
+              );
+              socket.write(compressed);
+              socket.end();
             });
           } else {
-            const headers = `HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: ${data.length}\r\n\r\n`;
-
-            socket.write(headers); // Write headers first
-            socket.write(data); // Then write uncompressed body
+            socket.write(
+              `HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: ${data.length}\r\n\r\n`
+            );
+            socket.write(data);
+            socket.end();
           }
-          socket.end();
         }
       });
     }
