@@ -68,7 +68,7 @@ const server = net.createServer((socket) => {
             }
 
             const gzipSupported = acceptEncoding.includes("gzip");
-            const headers = `HTTP/1.1 200 OK\r\n${gzipSupported ? "Content-Encoding: gzip\r\n" : ""}Content-Type: text/plain\r\nContent-Length: ${compressed.length}\r\n\r\n`;
+            const headers = `HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: text/plain\r\nContent-Length: ${compressed.length}\r\n\r\n`;
 
             socket.write(headers); // Write headers first
             socket.write(compressed); // Then write compressed body
