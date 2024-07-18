@@ -68,7 +68,7 @@ const server = net.createServer((socket) => {
             }
 
             for( let line of lines){  
-              (line.startsWith("Accept-Encoding:")) {
+             if (line.startsWith("Accept-Encoding:")) {
                 acceptEncoding = line.split(":")[1].trim();
               }
 
