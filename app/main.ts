@@ -54,8 +54,9 @@ const server = net.createServer((socket) => {
           
         } else if (url.startsWith('/echo/')) {
           const echoContent = url.slice(6); // Remove '/echo/' prefix
+          
           socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${echoContent.length}\r\n\r\n${echoContent}`);
-          console.log('reached here')
+          
         } else if(url.startsWith('/files/')){  
           handleFileRequest(socket, url, acceptEncoding); // Pass acceptEncoding here
         } else {
@@ -107,28 +108,25 @@ function handleFileRequest(socket: Socket, url: string, acceptEncoding: string) 
   let filePath = path.join(absPath, fileName!);
 
   fs.access(filePath, fs.constants.F_OK, (err) => {
-     if (err) {
-        console.error('File does not exist:', filePath);
-        socket.write('HTTP/1.1 404 Not Found\r\n\r\n');
+    if (err) {
+      console.error('File does not exist:', filePath);
+      socket.write('HTTP/1.1 404 Not Found\r\n\r\n');
+      socket.end();
+    } else {
+      fs.readFile(filePath, (err, data) => {
+        if (err) {
+          console.log(err);
+          socket.write('HTTP/1.1 404 Not Found\r\n\r\n');
+        } else {
+          const supportsGzip = acceptEncoding.includes('gzip');
+          socket.write(
+            `HTTP/1.1 200 OK\r\n${supportsGzip ? 'Content-Encoding: gzip\r\n' : ''}Content-Type: application/octet-stream\r\nContent-Length: ${data.length}\r\n\r\n`
+          );
+          socket.write(data);
+        }
         socket.end();
-     } else {
-        fs.readFile(filePath, (err, data) => {
-           if (err) {
-              console.log(err);
-              socket.write('HTTP/1.1 404 Not Found\r\n\r\n');
-           } else {
-              const supportsGzip = acceptEncoding.includes('gzip');
-              if (supportsGzip) {
-                // For now, just set the header without actually compressing
-                socket.write(`HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: application/octet-stream\r\nContent-Length: ${data.length}\r\n\r\n`);
-              } else {
-                socket.write(`HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: ${data.length}\r\n\r\n`);
-              }
-              socket.write(data);
-           }
-           socket.end();
-        });
-     }
+      });
+    }
   });
 }
 
