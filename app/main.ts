@@ -68,6 +68,7 @@ const server = net.createServer((socket) => {
             }
 
             const gzipSupported = acceptEncoding.includes("gzip");
+            console.log(gzipSupported)
             const headers = `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n${
               gzipSupported ? "Content-Encoding: gzip\r\n" : ""
             }Content-Length: ${compressed.length}\r\n\r\n`;
