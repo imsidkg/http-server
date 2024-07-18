@@ -59,8 +59,8 @@ const server = net.createServer((socket) => {
         } else if (url.startsWith("/echo/")) {
           const echoContent = url.slice(6); // Remove '/echo/' prefix
 
+          console.log(echoContent)
           var compressed = zlib.deflate(echoContent);
-          console.log(compressed)
           const supportsGzip = acceptEncoding.includes("gzip");
           socket.write(
             `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n${
