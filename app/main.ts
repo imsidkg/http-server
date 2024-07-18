@@ -57,16 +57,26 @@ const server = net.createServer((socket) => {
             `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${contentLength}\r\n\r\n${userAgent}`
           );
         } else if (url.startsWith("/echo/")) {
+          
           const echoContent = url.slice(6); // Remove '/echo/' prefix
+          const input = Buffer.from(echoContent); // Use Buffer.from instead of Buffer
 
-          console.log(echoContent)
-          var compressed = zlib.deflate(echoContent);
-          const supportsGzip = acceptEncoding.includes("gzip");
-          socket.write(
-            `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n${
-              supportsGzip ? "Content-Encoding: gzip\r\n" : ""
-            }Content-Length: ${compressed.length}\r\n\r\n${compressed}`
-          );
+          zlib.deflate(input, (err:Error | null, compressed:Buffer) => {
+            if (err) {
+              console.error("Error compressing data:", err);
+              socket.write("HTTP/1.1 500 Internal Server Error\r\n\r\n");
+              return;
+            }
+
+            const supportsGzip = acceptEncoding.includes("gzip");
+            socket.write(
+              `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n${
+                supportsGzip ? "Content-Encoding: gzip\r\n" : ""
+              }Content-Length: ${compressed.length}\r\n\r\n`
+            );
+            socket.write(compressed);
+            socket.end();
+          });
         } else if (url.startsWith("/files/")) {
           console.log("reached here 1");
           handleFileRequest(socket, url, acceptEncoding); // Pass acceptEncoding here
