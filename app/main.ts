@@ -54,7 +54,7 @@ const server = net.createServer((socket) => {
         } else if (url === "/user-agent") {
           const contentLength = userAgent.length.toString();
           socket.write(
-            `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${contentLength}\r\n\r\n${userAgent}`
+            `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n"Content-Encoding: gzip\r\n"Content-Length: ${contentLength}\r\n\r\n${userAgent}`
           );
         } else if (url.startsWith("/echo/")) {
           
