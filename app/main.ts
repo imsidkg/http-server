@@ -267,39 +267,43 @@ const server = net.createServer((socket) => {
           socket.write(
             `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${contentLength}\r\n\r\n${userAgent}`
           );
-        } else if (url.startsWith("/echo/")) {
-          const echoContent = url.slice(6);
-          const input = Buffer.from(echoContent);
-
-          zlib.gzip(input, (err: Error | null, compressed: Buffer) => {
-            if (err) {
-              console.error("Error compressing data:", err);
-              socket.write("HTTP/1.1 500 Internal Server Error\r\n\r\n");
-              return;
-            }
-            for(let line of lines){
-              if (line.startsWith("Accept-Encoding:")) {
-                acceptEncoding = line.split(":")[1].trim();
-              }
-          }
-
-            const gzipSupported = acceptEncoding.includes("gzip");
-            console.log(gzipSupported);
-            console.log('compressed length is', compressed.length);
-            console.log('input length is', input.length);
-            
-            const headers = `HTTP/1.1 200 OK\r\n${gzipSupported ? "Content-Encoding: gzip\r\n" : ""}Content-Type: text/plain\r\nContent-Length: ${input.length}\r\n\r\n`;
-
-            Promise.all([
-              new Promise(resolve => socket.write(headers, resolve)),
-              new Promise(resolve => socket.write(compressed, resolve))
-            ]).then(() => socket.end());
-          });
         } else if (url.startsWith("/files/")) {
           console.log("reached here 1");
           handleFileRequest(socket, url, acceptEncoding);
           console.log("reached here 2");
-        } else {
+        }
+        else if (url.startsWith("/echo/")) {
+  const echoContent = url.slice(6);
+  const input = Buffer.from(echoContent);
+
+  zlib.gzip(input, (err: Error | null, compressed: Buffer) => {
+    if (err) {
+      console.error("Error compressing data:", err);
+      socket.write("HTTP/1.1 500 Internal Server Error\r\n\r\n");
+      return;
+    }
+
+    const gzipSupported = acceptEncoding.includes("gzip");
+    console.log(gzipSupported);
+    console.log('compressed length is', compressed.length);
+    console.log('input length is', input.length);
+    
+    if (gzipSupported) {
+      const headers = `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Encoding: gzip\r\nContent-Length: ${compressed.length}\r\n\r\n`;
+      
+      socket.write(headers);
+      socket.write(compressed);
+    } else {
+      const headers = `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${input.length}\r\n\r\n`;
+      
+      socket.write(headers);
+      socket.write(input);
+    }
+    
+    socket.end();
+  });
+}
+         else {
           socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
         }
       } else {
