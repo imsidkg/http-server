@@ -3,7 +3,6 @@ import { Socket } from "net";
 import path from "path";
 import * as fs from "fs";
 import { Buffer } from "buffer";
-import { Zlib } from "zlib";
 var zlib = require('zlib');
 
 const server = net.createServer((socket) => {
@@ -11,7 +10,7 @@ const server = net.createServer((socket) => {
   let contentLength = 0;
   let method = "";
   let url = "";
-  let contentType = "";
+  let contentType = ""
   let acceptEncoding = ""; // Declare acceptEncoding here
 
   socket.on("data", (data) => {
@@ -23,8 +22,6 @@ const server = net.createServer((socket) => {
       console.log("method is", method);
       console.log("url is", url);
     }
-
-    const str = url.split("/")[2];
 
     let userAgent = "";
 
@@ -54,25 +51,23 @@ const server = net.createServer((socket) => {
         } else if (url === "/user-agent") {
           const contentLength = userAgent.length.toString();
           socket.write(
-            `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n"Content-Encoding: gzip\r\n"Content-Length: ${contentLength}\r\n\r\n${userAgent}`
+            `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${contentLength}\r\n\r\n${userAgent}`
           );
         } else if (url.startsWith("/echo/")) {
-          
           const echoContent = url.slice(6); // Remove '/echo/' prefix
           const input = Buffer.from(echoContent); // Use Buffer.from instead of Buffer
 
-          zlib.deflate(input, (err:Error | null, compressed:Buffer) => {
+          zlib.deflate(input, (err: Error | null, compressed: Buffer) => {
             if (err) {
               console.error("Error compressing data:", err);
               socket.write("HTTP/1.1 500 Internal Server Error\r\n\r\n");
               return;
             }
 
-            const supportsGzip = acceptEncoding.includes("gzip");
+            const gzipSupported = acceptEncoding.includes("gzip");
+
             socket.write(
-              `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n${
-                supportsGzip ? "Content-Encoding: gzip\r\n" : ""
-              }Content-Length: ${compressed.length}\r\n\r\n`
+              `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n${gzipSupported ? "Content-Encoding: gzip\r\n" : ""}Content-Length: ${compressed.length}\r\n\r\n`
             );
             socket.write(compressed);
             socket.end();
@@ -149,17 +144,30 @@ function handleFileRequest(
           console.log(err);
           socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
         } else {
-          const supportsGzip = acceptEncoding.includes("gzip");
-          socket.write(
-            `HTTP/1.1 200 OK\r\n${
-              supportsGzip ? "Content-Encoding: gzip\r\n" : ""
-            }Content-Type: application/octet-stream\r\nContent-Length: ${
-              data.length
-            }\r\n\r\n`
-          );
-          socket.write(data);
+          const gzipSupported = acceptEncoding.includes("gzip");
+          if (gzipSupported) {
+            zlib.gzip(data, (err:Error | null, compressed : Buffer) => {
+              if (err) {
+                console.error("Error compressing file:", err);
+                socket.write("HTTP/1.1 500 Internal Server Error\r\n\r\n");
+                socket.end();
+                return;
+              }
+
+              socket.write(
+                `HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: application/octet-stream\r\nContent-Length: ${compressed.length}\r\n\r\n`
+              );
+              socket.write(compressed);
+              socket.end();
+            });
+          } else {
+            socket.write(
+              `HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: ${data.length}\r\n\r\n`
+            );
+            socket.write(data);
+            socket.end();
+          }
         }
-        socket.end();
       });
     }
   });
