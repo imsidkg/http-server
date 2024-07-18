@@ -288,7 +288,7 @@ const server = net.createServer((socket) => {
             console.log('compressed length is', compressed.length);
             console.log('input length is', input.length);
             
-            const headers = `HTTP/1.1 200 OK\r\n${gzipSupported ? "Content-Encoding: gzip\r\n" : ""}Content-Type: text/plain\r\nContent-Length: ${compressed.length}\r\n\r\n`;
+            const headers = `HTTP/1.1 200 OK\r\n${gzipSupported ? "Content-Encoding: gzip\r\n" : ""}Content-Type: text/plain\r\nContent-Length: ${input.length}\r\n\r\n`;
 
             Promise.all([
               new Promise(resolve => socket.write(headers, resolve)),
