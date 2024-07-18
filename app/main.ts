@@ -1,3 +1,16 @@
+// 
+
+
+
+
+
+
+
+
+
+
+
+
 import * as net from "net";
 import { Socket } from "net";
 import path from "path";
@@ -11,7 +24,7 @@ const server = net.createServer((socket) => {
   let method = "";
   let url = "";
   let contentType = "";
-  let acceptEncoding = ""; // Declare acceptEncoding here
+  let acceptEncoding = "";
 
   socket.on("data", (data) => {
     const req = data.toString();
@@ -37,18 +50,14 @@ const server = net.createServer((socket) => {
       }
     }
 
-    // Print Accept-Encoding header for debugging
     console.log('accept encoding is', acceptEncoding);
 
     body += req.split("\r\n\r\n")[1] || "";
 
     if (body.length >= contentLength) {
-      // Handle POST request
       if (method === "POST" && url.startsWith("/files/")) {
         handlePostRequest(socket, body, contentType, url);
-      }
-      // Existing GET routes
-      else if (method === "GET") {
+      } else if (method === "GET") {
         if (url === "/") {
           socket.write("HTTP/1.1 200 OK\r\n\r\n");
         } else if (url === "/user-agent") {
@@ -57,11 +66,8 @@ const server = net.createServer((socket) => {
             `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${contentLength}\r\n\r\n${userAgent}`
           );
         } else if (url.startsWith("/echo/")) {
-          const echoContent = url.slice(6); // Remove '/echo/' prefix
-          const input = Buffer.from(echoContent); // Create a buffer for gzip compression
-
-          
-            
+          const echoContent = url.slice(6);
+          const input = Buffer.from(echoContent);
 
           zlib.gzip(input, (err: Error | null, compressed: Buffer) => {
             if (err) {
@@ -69,25 +75,22 @@ const server = net.createServer((socket) => {
               socket.write("HTTP/1.1 500 Internal Server Error\r\n\r\n");
               return;
             }
-            for(let line of lines){
-              if (line.startsWith("Accept-Encoding:")) {
-               acceptEncoding = line.split(":")[1].trim();
-             }
-           }
 
             const gzipSupported = acceptEncoding.includes("gzip");
-            console.log(gzipSupported)
-            console.log('compressed lenght is',compressed.length)
-            console.log('ip lenght is',input.length)
-            const headers = `HTTP/1.1 200 OK\r\n${gzipSupported ? "Content-Encoding: gzip\r\n" : ""}Content-Type: text/plain\r\nContent-Length: ${input.length}\r\n\r\n`;
+            console.log(gzipSupported);
+            console.log('compressed length is', compressed.length);
+            console.log('input length is', input.length);
+            
+            const headers = `HTTP/1.1 200 OK\r\n${gzipSupported ? "Content-Encoding: gzip\r\n" : ""}Content-Type: text/plain\r\nContent-Length: ${compressed.length}\r\n\r\n`;
 
-            socket.write(headers); // Write headers first
-            socket.write(compressed); // Then write compressed body
-            socket.end(); // Ensure the connection is properly closed
+            Promise.all([
+              new Promise(resolve => socket.write(headers, resolve)),
+              new Promise(resolve => socket.write(compressed, resolve))
+            ]).then(() => socket.end());
           });
         } else if (url.startsWith("/files/")) {
           console.log("reached here 1");
-          handleFileRequest(socket, url, acceptEncoding); // Pass acceptEncoding here
+          handleFileRequest(socket, url, acceptEncoding);
           console.log("reached here 2");
         } else {
           socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
@@ -96,13 +99,12 @@ const server = net.createServer((socket) => {
         socket.write("HTTP/1.1 405 Method Not Allowed\r\n\r\n");
       }
 
-      // Reset for next request
       body = "";
       contentLength = 0;
       method = "";
       url = "";
       contentType = "";
-      acceptEncoding = ""; // Reset acceptEncoding here
+      acceptEncoding = "";
     }
   });
 });
@@ -115,7 +117,7 @@ function handlePostRequest(
 ) {
   const args = process.argv.slice(2);
   const absPath = args[1];
-  const fileName = url.split("/").pop(); // Extract filename from URL
+  const fileName = url.split("/").pop();
 
   if (!fileName) {
     socket.write("HTTP/1.1 400 Bad Request\r\n\r\nInvalid file name");
