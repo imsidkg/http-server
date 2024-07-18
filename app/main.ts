@@ -2,6 +2,9 @@ import * as net from "net";
 import { Socket } from "net";
 import path from "path";
 import * as fs from "fs";
+import { Buffer } from "buffer";
+import { Zlib } from "zlib";
+var zlib = require('zlib');
 
 const server = net.createServer((socket) => {
   let body = "";
@@ -55,11 +58,13 @@ const server = net.createServer((socket) => {
           );
         } else if (url.startsWith("/echo/")) {
           const echoContent = url.slice(6); // Remove '/echo/' prefix
+
+          var compressed = zlib.deflate(echoContent);
           const supportsGzip = acceptEncoding.includes("gzip");
           socket.write(
             `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n${
               supportsGzip ? "Content-Encoding: gzip\r\n" : ""
-            }Content-Length: ${echoContent.length}\r\n\r\n${echoContent}`
+            }Content-Length: ${compressed.length}\r\n\r\n${compressed}`
           );
         } else if (url.startsWith("/files/")) {
           console.log("reached here 1");
