@@ -60,15 +60,23 @@ const server = net.createServer((socket) => {
           const echoContent = url.slice(6); // Remove '/echo/' prefix
           const input = Buffer.from(echoContent); // Create a buffer for gzip compression
 
+          
+            
+
           zlib.gzip(input, (err: Error | null, compressed: Buffer) => {
             if (err) {
               console.error("Error compressing data:", err);
               socket.write("HTTP/1.1 500 Internal Server Error\r\n\r\n");
               return;
             }
+            for(let line of lines){
+              if (line.startsWith("Accept-Encoding:")) {
+               acceptEncoding = line.split(":")[1].trim();
+             }
+           }
 
             const gzipSupported = acceptEncoding.includes("gzip");
-            const headers = `HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: text/plain\r\nContent-Length: ${compressed.length}\r\n\r\n`;
+            const headers = `HTTP/1.1 200 OK\r\n${gzipSupported ? "Content-Encoding: gzip\r\n" : ""}Content-Type: text/plain\r\nContent-Length: ${compressed.length}\r\n\r\n`;
 
             socket.write(headers); // Write headers first
             socket.write(compressed); // Then write compressed body
