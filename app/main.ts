@@ -51,9 +51,11 @@ const server = net.createServer((socket) => {
         } else if (url === '/user-agent') {
           const contentLength = userAgent.length.toString();
           socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${contentLength}\r\n\r\n${userAgent}`);
+          
         } else if (url.startsWith('/echo/')) {
           const echoContent = url.slice(6); // Remove '/echo/' prefix
           socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${echoContent.length}\r\n\r\n${echoContent}`);
+          console.log('reached here')
         } else if(url.startsWith('/files/')){  
           handleFileRequest(socket, url, acceptEncoding); // Pass acceptEncoding here
         } else {
