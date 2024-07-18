@@ -67,6 +67,13 @@ const server = net.createServer((socket) => {
               return;
             }
 
+            for( let line of lines){  
+              (line.startsWith("Accept-Encoding:")) {
+                acceptEncoding = line.split(":")[1].trim();
+              }
+
+            }
+
             const gzipSupported = acceptEncoding.includes("gzip");
             console.log(gzipSupported)
             const headers = `HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n${
