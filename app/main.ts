@@ -58,7 +58,9 @@ const server = net.createServer((socket) => {
           socket.write(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: ${echoContent.length}\r\n\r\n${echoContent}`);
           
         } else if(url.startsWith('/files/')){  
+          console.log('reached here 1')
           handleFileRequest(socket, url, acceptEncoding); // Pass acceptEncoding here
+          console.log('reached here 2')
         } else {
           socket.write('HTTP/1.1 404 Not Found\r\n\r\n');
         }
